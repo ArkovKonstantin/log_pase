@@ -128,3 +128,5 @@ TypeError
 [28/Mar/2018 11:19:41] "GET https://www.sys.mail.ru/stats/get_views_count_for_list/?data_list%5B%5D=40263&data_list%5B%5D=40267&data_list%5B%5D=40265&data_list%5B%5D=40261&data_list%5B%5D=40257&data_list%5B%5D=40255&data_list%5B%5D=40253&data_list%5B%5D=40247&data_list%5B%5D=40243&data_list%5B%5D=40241&ctype=254 HTTP/1.1" 200 196
 [28/Mar/2018 11:19:41] "GET https://www.sys.mail.ru/calendar/meeting/254/40267/?type=paginated_range HTTP/1.1" 200 14
 [28/Mar/2018 11:19:41] "GET https://sys.mail.ru/calendar/meeting/254/40261/?type=paginated_range HTTP/1.1" 200 14
+[20/Mar/2018 11:15:46] "GET https://sys.mail.ru/asdasd/ HTTP/1.1" 200 27512
+[20/Mar/2018 11:15:46] "GET https://sys.mail.ru/asdasd/ HTTP/1.1" 200 27

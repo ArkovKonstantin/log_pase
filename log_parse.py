@@ -30,7 +30,7 @@ def parse(
                 if ignore_files:
                     file = ignore_file_pattern.search(line)
                     if file is not None:
-                        return []
+                        continue
 
                 if request.startswith('https'):
                     request = request.replace('https', 'http', 1)

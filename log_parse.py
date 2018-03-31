@@ -90,8 +90,8 @@ def parse(
                 continue
 
     if slow_queries:
-        return sorted(
-            [item[1] // item[0] for item in sorted(list(result.values()), key=lambda x: x[1], reverse=True)],
-            reverse=True)[:5]  # получаем среднее значение запроса и преобразуем result[[],[],[]] -> [, , ,]
+        # получаем среднее значение запроса
+        return sorted([item[1] // item[0] for item in list(result.values())], reverse=True)[:5]
     else:
-        return [item[0] for item in sorted(list(result.values()), reverse=True)[:5]]  # сортируем result
+        # преобразуем result[[],[],[]] -> [, , ,]
+        return sorted([item[0] for item in list(result.values())], reverse=True)[:5]

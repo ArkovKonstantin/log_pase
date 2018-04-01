@@ -4,10 +4,11 @@ import collections
 from datetime import datetime
 
 
-def check_urls(request, ignore_urls, pattern):
-    ignore_urls = list(map(lambda x: pattern.search(x).group(), ignore_urls))
-    ignore_urls = list(
-        map(lambda x: x.replace('https', 'http', 1) if x.startswith('https') else x, ignore_urls))
+def check_urls(request, ignore_urls):
+    # На случай если в преданном url есть параметры
+    ignore_urls = list(map(lambda x: division(x)['request'], ignore_urls))
+    # На случай если в преданный url начинается с https
+    ignore_urls = list(map(lambda x: x.replace('https', 'http', 1) if x.startswith('https') else x, ignore_urls))
     try:
         ignore_urls.index(request)
         return -1
@@ -15,18 +16,30 @@ def check_urls(request, ignore_urls, pattern):
         return 1
 
 
-def interval(start_at, stop_at, date_pattern, line):
+def interval(start_at, stop_at, date):
     if start_at:
-        date_string = date_pattern.search(line).group()
-        dt = datetime.strptime(date_string, "%d/%b/%Y %H:%M:%S")
-        if dt < start_at:
+        if date < start_at:
             return 1  # continue
 
     if stop_at:
-        date_string = date_pattern.search(line).group()
-        dt = datetime.strptime(date_string, "%d/%b/%Y %H:%M:%S")
-        if dt > stop_at:
+        if date > stop_at:
             return -1  # break
+
+
+def division(line) -> dict:
+    log_structure = {}
+    pattern = re.compile(r'(https?:\/\/)([\da-z\.-]+)\.([a-z\.]{2,6})([\/\w\.-]*)*\/?')  # паттерн для ulr
+    date_pattern = re.compile(r'(\d{1,2}/?[a-zA-Z]+/?\d{1,4} \d{2}:\d{2}:\d{2})')  # для даты
+    request_type_pattern = re.compile(r'([A-Z]*)\ (https?:\/\/)')  # тип запроса (GET,PUT, POST)
+    queries_pattern = re.compile(r'[\d]+$')  # время выполнеия
+    ignore_file_pattern = re.compile(r'\.[a-z]*$')  # Формат файла
+
+    log_structure['request'] = pattern.search(line).group()
+    log_structure['file'] = ignore_file_pattern.search(line)
+    log_structure['date'] = datetime.strptime(date_pattern.search(line).group(), "%d/%b/%Y %H:%M:%S")
+    log_structure['request_type'] = request_type_pattern.search(line).group()
+    log_structure['queries'] = queries_pattern.search(line).group()
+    return log_structure
 
 
 def parse(
@@ -38,19 +51,15 @@ def parse(
         ignore_www=False,
         slow_queries=False
 ):
-    pattern = re.compile(r'(https?:\/\/)([\da-z\.-]+)\.([a-z\.]{2,6})([\/\w\.-]*)*\/?')  # паттерн для ulr
-    date_pattern = re.compile(r'(\d{1,2}/?[a-zA-Z]+/?\d{1,4} \d{2}:\d{2}:\d{2})')  # для даты
-    request_type_pattern = re.compile(r'([A-Z]*)\ (https?:\/\/)')  # тип запроса (GET,PUT, POST)
-    queries_pattern = re.compile(r'[\d]+$')  # время выполнеия
-    ignore_file_pattern = re.compile(r'\.[a-z]*$')  # Формат файла
     result = collections.defaultdict(list)
     with open('log.log', 'r') as r:
         for line in r.readlines():
             try:
-                request = pattern.search(line).group()
+                log_structure = division(line)
+                request = log_structure['request']
 
                 if ignore_files:
-                    file = ignore_file_pattern.search(line)
+                    file = log_structure['file']
                     if file is not None:
                         continue
 
@@ -61,18 +70,17 @@ def parse(
                     if request.split('://')[1].startswith('www'):
                         request = 'http://{}'.format(request.split('://')[1].replace('www.', '', 1))
                 # Обработка логов в заданном интервале
-                if interval(start_at, stop_at, date_pattern, line) == 1:
+                if interval(start_at, stop_at, log_structure['date']) == 1:
                     continue
-                elif interval(start_at, stop_at, date_pattern, line) == -1:
+                elif interval(start_at, stop_at, log_structure['date']) == -1:
                     break
                 # Обработка запросов заданого типа (PUT,GET,POST)
                 if request_type:
-                    rt = request_type_pattern.search(line).group()
-                    if rt.split(' ')[0] != request_type:
+                    if log_structure['request_type'](' ')[0] != request_type:
                         continue
 
                 if ignore_urls:
-                    if check_urls(request, ignore_urls, pattern) < 0:
+                    if check_urls(request, ignore_urls) < 0:
                         continue
 
                 if result.get(request):
@@ -82,8 +90,7 @@ def parse(
                     result[request].append(0)
 
                 if slow_queries:
-                    queries = queries_pattern.search(line).group()
-                    q = int(queries)
+                    q = int(log_structure['queries'])
                     result[request][1] += q
 
             except AttributeError:

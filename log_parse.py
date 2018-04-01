@@ -95,10 +95,9 @@ def parse(
 
             except AttributeError:
                 continue
-
     if slow_queries:
         # получаем среднее значение запроса
-        return sorted([item[1] // item[0] for item in list(result.values())], reverse=True)[:5]
+        return sorted([item[1] // item[0] for item in result.values()], reverse=True)[:5]
     else:
         # преобразуем result[[],[],[]] -> [, , ,]
-        return sorted([item[0] for item in list(result.values())], reverse=True)[:5]
+        return sorted([item[0] for item in result.values()], reverse=True)[:5]
